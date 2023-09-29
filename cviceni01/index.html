@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8"/>
+	<title>RGB to Grayscale</title>
+</head>
+<body>
+
+<canvas id="src" width="512" height="512"></canvas>
+<canvas id="dst" width="512" height="512"></canvas>
+
+<script type="text/javascript">
+	window.onload = function() {
+
+		/* Load source image */
+		var srcCanvas = document.getElementById("src");
+		var srcContext = srcCanvas.getContext("2d");
+		var srcImg = new Image();
+		srcImg.src = "./lena.png";
+
+		srcImg.onload = function () {
+			srcContext.drawImage(srcImg, 0, 0);
+
+			var imgHeight = srcImg.height;
+			var imgWidth = srcImg.width;
+
+			var srcImageData = srcContext.getImageData(0, 0, imgWidth, imgHeight);
+			var srcData = srcImageData.data;
+
+			var dstCanvas = document.getElementById("dst");
+			var dstContext = dstCanvas.getContext("2d");
+			var dstImg = dstContext.getImageData(0, 0, imgWidth, imgHeight);
+			var dstData = dstImg.data;
+
+			console.log('experiment');
+
+			// // Go through image data
+			// for (var i = 0; i < srcData.length; i += 4) {
+			// 	var red = srcData[i];
+			// 	var green = srcData[i + 1];
+			// 	var blue = srcData[i + 2];
+			// 	var alpha = srcData[i + 3];
+
+			// 	// Do magic at this place :-)
+
+			// 	dstData[i] = 255 - red;
+			// 	dstData[i + 1] = 255 - green;
+			// 	dstData[i + 2] = 255 - blue;
+			// 	dstData[i + 3] = alpha;
+			// };
+
+			// Go through the image using x,y coordinates
+			for(var y = 0; y < imgHeight; y++) {
+				for(var x = 0; x < imgWidth; x++) {
+
+					var red = srcData[((imgWidth * y) + x) * 4];
+					var green = srcData[((imgWidth * y) + x) * 4 + 1];
+					var blue = srcData[((imgWidth * y) + x) * 4 + 2];
+					var alpha = srcData[((imgWidth * y) + x) * 4 + 3];
+
+					if (y < 8 && x < 8) {
+						console.log(x, y, red, green, blue);
+					}
+
+					// Do magic at this place :-)
+
+					dstData[((imgWidth * y) + x) * 4] = 255 - red;
+					dstData[((imgWidth * y) + x) * 4 + 1] = 255 - green;
+					dstData[((imgWidth * y) + x) * 4 + 2] = 255 - blue;
+					dstData[((imgWidth * y) + x) * 4 + 3] = alpha;
+				}
+			}
+
+			dstContext.putImageData(dstImg, 0, 0);
+		}
+	}
+</script>
+
+</body>
+</html>
