@@ -1,22 +1,61 @@
 <!DOCTYPE html>
 <html>
+	
+
 <head>
-	<meta charset="UTF-8"/>
+	<meta charset="UTF-8" />
 	<title>RGB to Bitmap</title>
+
+	<style>
+        html {
+            font-family:Verdana, Geneva, Tahoma, sans-serif
+        }
+		div{
+			display: flex; 
+			align-items: center;
+			gap:1em;
+			margin-top: 2em;
+		}
+    </style>
 </head>
 
 <body>
+	<form action="#" style="display: flex; gap: 1rem;">
+		<div>
+			<label for="person_canvas">Osoba</label>
+			<input type="file" id="person_canvas" onchange="handleFileSelect(this, 'person')" />
+		</div>
+		<div>
+			<label for="background_canvas">Pozadí</label>
+			<input type="file" id="background_canvas" onchange="handleFileSelect(this, 'background')" />
+		</div>
+		<div>
+			<label for="logo_canvas">Logo</label>
+			<input type="file" id="logo_canvas" onchange="handleFileSelect(this, 'logo')" />
+		</div>
+		<div>
+			<label for="chroma_key" >Klíč</label>
+			<input type="color" id="chroma_key" value="#26ff1c" onchange="convertImage()" />
+		</div>
+		<div >
+			<label for="chroma_range" >Rozsah vyklíčované barvy</label>
+			<input type="range" id="chroma_range" value="0.5" min="0" max="1" step="0.01" autocomplete="off" oninput="convertImage()"/>
+			<span style="width: 5ch" id="chroma_range_value">0.5</span>
+		</div>
+
+		<button type="button" id="convert" disabled>Convert</button>
+
+	</form>
+
+
+	</br>
 	<canvas id="person" width="256" height="256"></canvas>
-    <canvas id="background" width="256" height="256"></canvas>
-    <canvas id="logo" width="256" height="256"></canvas>
-    <canvas id="result" width="256" height="256"></canvas>
-	<br/>
-	<input type="file" id="file" onchange="handleFileSelect(this, 'person')" name="files[]"/>
-    <input type="file" id="file" onchange="handleFileSelect(this, 'background')" name="files[]"/>
-    <input type="file" id="file" onchange="handleFileSelect(this, 'logo')" name="files[]"/>
-	<button type="button" id="convert" disabled>Convert</button>
+	<canvas id="background" width="256" height="256"></canvas>
+	<canvas id="logo" width="256" height="256"></canvas>
+	<canvas id="result" width="256" height="256"></canvas>
+
 </body>
 
 <script type="text/javascript" src="./script.js"></script>
 
-</html>                                          
+</html>
