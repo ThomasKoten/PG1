@@ -1,80 +1,204 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-	<meta charset="UTF-8"/>
-	<title>RGB to Grayscale</title>
+    <meta charset="UTF-8" />
+    <title>Začátky Počítačové grafiky</title>
 </head>
+
 <body>
 
-<canvas id="src" width="512" height="512"></canvas>
-<canvas id="dst" width="512" height="512"></canvas>
+    <canvas id="Original" width="512" height="512"></canvas>
+    <canvas id="Grayscale_avg" width="512" height="512"></canvas>
+    <canvas id="Grayscale_eye" width="512" height="512"></canvas>
+    <canvas id="collage_RGBA" width="512" height="512"></canvas>
+    <canvas id="collage_CMYK" width="512" height="512"></canvas>
 
-<script type="text/javascript">
-	window.onload = function() {
+    <script type="text/javascript">
 
-		/* Load source image */
-		var srcCanvas = document.getElementById("src");
-		var srcContext = srcCanvas.getContext("2d");
-		var srcImg = new Image();
-		srcImg.src = "./lena.png";
+        /**
+         * Načte plátno
+         * @param {image} src - Zdroj obrázku
+         * @param {number} id - ID pracovního plátna
+         */
+        function getCanvas(src, id) {
+            const canvas = document.getElementById(id);
+            const context = canvas.getContext("2d");
+            const image = context.getImageData(0, 0, src.width, src.height);
+            const data = image.data;
 
-		srcImg.onload = function () {
-			srcContext.drawImage(srcImg, 0, 0);
+            return {
+                context,
+                image,
+                data
+            }
+        }
+        /**
+         * Načte data do plátna
+         * @param {ImageData} data - Data obrázku na vykreslení
+         * @param {number} width - Šířka plátna
+         * @param {number} height - Výša plátna
+         */
+        function getCanvasWithImageData(data, width, height) {
+            const canvas = document.createElement("canvas");
+            canvas.width = width;
+            canvas.height = height;
+            canvas.getContext("2d").putImageData(data, 0, 0);
 
-			var imgHeight = srcImg.height;
-			var imgWidth = srcImg.width;
+            return canvas;
+        }
 
-			var srcImageData = srcContext.getImageData(0, 0, imgWidth, imgHeight);
-			var srcData = srcImageData.data;
+        /**
+         * Převod z RGB modelu na CMYK
+         * @param {number} red - Hodnoty zastoupení červené
+         * @param {number} green - Hodnoty zastoupení zelené
+         * @param {number} blue - Hodnoty zastoupení modré
+         */
+        function rgb2cmyk(red, green, blue) {
+            const r = red / 255;
+            const g = green / 255;
+            const b = blue / 255;
 
-			var dstCanvas = document.getElementById("dst");
-			var dstContext = dstCanvas.getContext("2d");
-			var dstImg = dstContext.getImageData(0, 0, imgWidth, imgHeight);
-			var dstData = dstImg.data;
+            const black = 1 - Math.max(r, g, b);
+            const cyan = (1 - r - black) / (1 - black)
+            const magenta = (1 - g - black) / (1 - black) ;
+            const yellow = (1 - b - black) / (1 - black);
 
-			console.log('experiment');
+            return {
+                cyan,
+                magenta,
+                yellow,
+                black
+            }
+        }
 
-			// // Go through image data
-			// for (var i = 0; i < srcData.length; i += 4) {
-			// 	var red = srcData[i];
-			// 	var green = srcData[i + 1];
-			// 	var blue = srcData[i + 2];
-			// 	var alpha = srcData[i + 3];
+        window.onload = function () {
+            // Načtení originálního obrazu
+            const srcContext = document.getElementById("Original").getContext("2d");
+            const srcImg = new Image();
+            srcImg.src = "./lena.png";
 
-			// 	// Do magic at this place :-)
+            srcImg.onload = function () {
+                srcContext.drawImage(srcImg, 0, 0);
 
-			// 	dstData[i] = 255 - red;
-			// 	dstData[i + 1] = 255 - green;
-			// 	dstData[i + 2] = 255 - blue;
-			// 	dstData[i + 3] = alpha;
-			// };
+                const imgHeight = srcImg.height;
+                const imgWidth = srcImg.width;
+                const srcImageData = srcContext.getImageData(0, 0, imgWidth, imgHeight);
+                const srcData = srcImageData.data;
 
-			// Go through the image using x,y coordinates
-			for(var y = 0; y < imgHeight; y++) {
-				for(var x = 0; x < imgWidth; x++) {
+                // Obrazová data jednotlivých kanálů
+                const channels = {
+                    red: new ImageData(imgWidth, imgHeight),
+                    green: new ImageData(imgWidth, imgHeight),
+                    blue: new ImageData(imgWidth, imgHeight),
+                    alpha: new ImageData(imgWidth, imgHeight),
 
-					var red = srcData[((imgWidth * y) + x) * 4];
-					var green = srcData[((imgWidth * y) + x) * 4 + 1];
-					var blue = srcData[((imgWidth * y) + x) * 4 + 2];
-					var alpha = srcData[((imgWidth * y) + x) * 4 + 3];
+                    cyan: new ImageData(imgWidth, imgHeight),
+                    magenta: new ImageData(imgWidth, imgHeight),
+                    yellow: new ImageData(imgWidth, imgHeight),
+                    black: new ImageData(imgWidth, imgHeight)
 
-					if (y < 8 && x < 8) {
-						console.log(x, y, red, green, blue);
-					}
+                }
 
-					// Do magic at this place :-)
+                const gs_average = getCanvas(srcImg, "Grayscale_avg");
+                const gs_eye = getCanvas(srcImg, "Grayscale_eye");
+                const RGBACanvas = getCanvas(srcImg, "collage_RGBA");
+                const CMYKCanvas = getCanvas(srcImg, "collage_CMYK");
 
-					dstData[((imgWidth * y) + x) * 4] = 255 - red;
-					dstData[((imgWidth * y) + x) * 4 + 1] = 255 - green;
-					dstData[((imgWidth * y) + x) * 4 + 2] = 255 - blue;
-					dstData[((imgWidth * y) + x) * 4 + 3] = alpha;
-				}
-			}
 
-			dstContext.putImageData(dstImg, 0, 0);
-		}
-	}
-</script>
+                for (var y = 0; y < imgHeight; y++) {
+                    for (var x = 0; x < imgWidth; x++) {
+                        const red = srcData[((imgWidth * y) + x) * 4];
+                        const green = srcData[((imgWidth * y) + x) * 4 + 1];
+                        const blue = srcData[((imgWidth * y) + x) * 4 + 2];
+                        const alpha = srcData[((imgWidth * y) + x) * 4 + 3];
+
+                        const index = ((imgWidth * y) + x) * 4
+                        const { cyan, magenta, yellow, black } = rgb2cmyk(red, green, blue);
+
+                        //Grayscale
+                        const avg = (red + green + blue) / 3;
+                        gs_average.data[index] = avg;
+                        gs_average.data[index + 1] = avg;
+                        gs_average.data[index + 2] = avg;
+                        gs_average.data[index + 3] = alpha;
+
+                        //Grayscale for eye
+                        const intesity = 0.32 * red + 0.64 * green + 0.02 * blue;
+                        gs_eye.data[index] = intesity;
+                        gs_eye.data[index + 1] = intesity;
+                        gs_eye.data[index + 2] = intesity;
+                        gs_eye.data[index + 3] = alpha;
+
+                        //RGBA collage
+                        channels.red.data[index] = red;
+                        channels.red.data[index + 1] = 0;
+                        channels.red.data[index + 2] = 0;
+                        channels.red.data[index + 3] = alpha;
+
+                        channels.green.data[index] = 0;
+                        channels.green.data[index + 1] = green;
+                        channels.green.data[index + 2] = 0;
+                        channels.green.data[index + 3] = alpha;
+
+                        channels.blue.data[index] = 0;
+                        channels.blue.data[index + 1] = 0;
+                        channels.blue.data[index + 2] = blue;
+                        channels.blue.data[index + 3] = alpha;
+
+                        channels.alpha.data[index] = 0;
+                        channels.alpha.data[index + 1] = 0;
+                        channels.alpha.data[index + 2] = 0;
+                        channels.alpha.data[index + 3] = alpha;
+
+                        //CMYK collage
+                        channels.cyan.data[index] = 0;
+                        channels.cyan.data[index + 1] = 255;
+                        channels.cyan.data[index + 2] = 255;
+                        channels.cyan.data[index + 3] = cyan * 255;
+
+                        channels.magenta.data[index] = 255;
+                        channels.magenta.data[index + 1] = 0;
+                        channels.magenta.data[index + 2] = 255;
+                        channels.magenta.data[index + 3] = magenta * 255;
+
+                        channels.yellow.data[index] = 255;
+                        channels.yellow.data[index + 1] = 255;
+                        channels.yellow.data[index + 2] = 0;
+                        channels.yellow.data[index + 3] = yellow * 255;
+
+                        channels.black.data[index] = 0;
+                        channels.black.data[index + 1] = 0;
+                        channels.black.data[index + 2] = 0;
+                        channels.black.data[index + 3] = black * 255;
+                    }
+                }
+                const red = getCanvasWithImageData(channels.red, imgWidth, imgHeight);
+                const green = getCanvasWithImageData(channels.green, imgWidth, imgHeight);
+                const blue = getCanvasWithImageData(channels.blue, imgWidth, imgHeight);
+                const alpha = getCanvasWithImageData(channels.alpha, imgWidth, imgHeight);
+                const cyan = getCanvasWithImageData(channels.cyan, imgWidth, imgHeight);
+                const magenta = getCanvasWithImageData(channels.magenta, imgWidth, imgHeight);
+                const yellow = getCanvasWithImageData(channels.yellow, imgWidth, imgHeight);
+                const black = getCanvasWithImageData(channels.black, imgWidth, imgHeight);
+
+                gs_average.context.putImageData(gs_average.image, 0, 0);
+                gs_eye.context.putImageData(gs_eye.image, 0, 0);
+
+                RGBACanvas.context.drawImage(red, 0, 0, imgHeight / 2, imgWidth / 2);
+                RGBACanvas.context.drawImage(green, imgHeight / 2, 0, imgHeight / 2, imgWidth / 2);
+                RGBACanvas.context.drawImage(blue, 0, imgWidth / 2, imgHeight / 2, imgWidth / 2);
+                RGBACanvas.context.drawImage(alpha, imgHeight / 2, imgWidth / 2, imgHeight / 2, imgWidth / 2);
+
+                CMYKCanvas.context.drawImage(cyan, 0, 0, imgHeight / 2, imgWidth / 2);
+                CMYKCanvas.context.drawImage(magenta, imgHeight / 2, 0, imgHeight / 2, imgWidth / 2);
+                CMYKCanvas.context.drawImage(yellow, 0, imgWidth / 2, imgHeight / 2, imgWidth / 2);
+                CMYKCanvas.context.drawImage(black, imgHeight / 2, imgWidth / 2, imgHeight / 2, imgWidth / 2);
+
+            }
+        }
+    </script>
 
 </body>
+
 </html>
