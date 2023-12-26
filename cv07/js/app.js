@@ -1,4 +1,6 @@
 window.onload = function () {
+	menu.style.display = 'flex';
+}
 	var stats;
 
 	var camera, controls, scene, parent, obj, cube, box, paddle1, paddle1_bounce, paddle2, paddle2_bounce, renderer
@@ -7,7 +9,8 @@ window.onload = function () {
 		player1: 0,
 		player2: 0
 	};
-	var scoreBoard = document.getElementById('scoreBoard')
+	var scoreBoard = document.getElementById('scoreBoard');
+	var menu = document.getElementById('menu');
 	var dy = 0.01;
 	var dx = 0.02;
 	const box_width = 4.01;
@@ -23,9 +26,14 @@ window.onload = function () {
 	const y_addon = ((box_heigth - 3.01) + (1 - cube_size)) / 2;
 	const box_border = (box_heigth - paddle_height) / 2;
 
-	init();
-	animate();
+	
 
+	function startGame(choice){
+		menu.style.display = 'none';
+        // Start the animation loop
+		init();
+        animate();
+	}
 	function init() {
 
 		camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
@@ -146,7 +154,7 @@ window.onload = function () {
 	}
 	function updateScoreBoard(playerName) {
 		addPoint(playerName);
-		scoreBoard.innerText=score["player1"]+" : "+score["player2"]
+		scoreBoard.innerText = score["player1"] + " : " + score["player2"]
 		reset();
 	}
 
@@ -236,4 +244,3 @@ window.onload = function () {
 		// Update draw statistics
 		stats.update();
 	}
-}
