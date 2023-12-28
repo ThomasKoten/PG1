@@ -1,8 +1,27 @@
 window.onload = function () {
 	menu.style.display = 'flex';
 }
-var stats;
+var audioContext = new AudioContext();
 
+function loadSound(url, callback) {
+	fetch(url)
+		.then(response => response.arrayBuffer())
+		.then(data => audioContext.decodeAudioData(data))
+		.then(decodedData => callback(decodedData));
+}
+
+var hit_sound;
+loadSound('/sounds/DOBRYDEN.wav', function (buffer) {
+	hit_sound = buffer;
+});
+
+function playSound(buffer) {
+	var source = audioContext.createBufferSource();
+	source.buffer = buffer;
+	source.connect(audioContext.destination);
+	source.start(0);
+}
+var stats;
 var camera, controls, scene, parent, obj, cube, box, paddle1, paddle1_bounce, paddle2, paddle2_bounce, renderer, dy, dx
 let box_width, box_height, cube_size, paddle_height, y_speed, zoom_out, paddle_start, x_addon, y_addon, box_border;
 
@@ -211,6 +230,7 @@ function animate() {
 	requestAnimationFrame(animate);
 	// Test of object animation
 	if ((obj.position.y - y_addon) >= 1.0 || (obj.position.y + y_addon) <= -1.0) {
+		playSound(hit_sound);
 		dy = -dy;
 	};
 	obj.position.y += dy;
@@ -223,6 +243,7 @@ function animate() {
 		updateScoreBoard("player1");
 	}
 	if (isPaddleCollision(paddle1) && (obj.position.x + x_addon - paddle_width) <= -1.0) {
+		playSound(hit_sound);
 		dx = -dx;
 		const collisionPoint = calculateCollision(paddle1);
 		dy = collisionPoint * max_vertical_speed
@@ -230,6 +251,7 @@ function animate() {
 	}
 
 	if (isPaddleCollision(paddle2) && (obj.position.x - x_addon + paddle_width) >= 1.0) {
+		playSound(hit_sound);
 		dx = -dx;
 		const collisionPoint = calculateCollision(paddle2);
 		dy = collisionPoint * max_vertical_speed
