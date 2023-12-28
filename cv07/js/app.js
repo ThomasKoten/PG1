@@ -31,11 +31,11 @@ const game_modes = {
 		box_width: 10.01,
 		box_height: 10.01,
 		cube_size: 0.5,
-		paddle_size_coeff: 5,
-		speed_coeff: 15
+		paddle_size_coeff: 4,
+		speed_coeff: 14
 	},
 	large: {
-		dy: 0.0,
+		dy: 0.08,
 		dx: 0.06,
 		box_width: 18.01,
 		box_height: 15.01,
@@ -50,6 +50,7 @@ function startGame(mode) {
 	menu.style.display = 'none';
 	currentGameMode = game_modes[mode];
 	dy = currentGameMode.dy;
+	max_vertical_speed = dy
 	dx = currentGameMode.dx;
 	box_width = currentGameMode.box_width;
 	box_height = currentGameMode.box_height;
@@ -180,6 +181,20 @@ function isPastPaddle2() {
 	return obj.position.x >= paddle2.position.x - paddle_width;
 }
 
+function isPaddleCollision(paddle) {
+	const half_paddle = paddle_height / 2;
+	const half_cube = cube_size / 2;
+	var paddle_y = paddle.position.y;
+	var cube_y = obj.position.y;
+	return (paddle_y - half_paddle) <= (cube_y + half_cube) && (cube_y - half_cube) <= (paddle_y + half_paddle)
+}
+function calculateCollision(paddle) {
+	//* Užitek nebo škoda?
+	const relative_position = obj.position.y - paddle.position.y;
+	const normalized_position = relative_position / (paddle_height / 4);
+	return normalized_position;
+}
+
 function addPoint(playerName) {
 	score[playerName]++;
 	console.log(score);
@@ -207,21 +222,22 @@ function animate() {
 	if (isPastPaddle2()) {
 		updateScoreBoard("player1");
 	}
-	if ((paddle1.position.y - paddle_height / 2) <= (obj.position.y + cube_size / 2) && (obj.position.y - cube_size / 2) <= (paddle1.position.y + paddle_height / 2)) {
-		paddle1_bounce = paddle_width;
+	if (isPaddleCollision(paddle1) && (obj.position.x + x_addon - paddle_width) <= -1.0) {
+		dx = -dx;
+		const collisionPoint = calculateCollision(paddle1);
+		dy = collisionPoint * max_vertical_speed
+		console.log(collisionPoint)
 	}
 
-	if ((paddle2.position.y - paddle_height / 2) <= (obj.position.y + cube_size / 2) && (obj.position.y - cube_size / 2) <= (paddle2.position.y + paddle_height / 2)) {
-		paddle2_bounce = paddle_width;
+	if (isPaddleCollision(paddle2) && (obj.position.x - x_addon + paddle_width) >= 1.0) {
+		dx = -dx;
+		const collisionPoint = calculateCollision(paddle2);
+		dy = collisionPoint * max_vertical_speed
 	}
-	console.log(paddle1.position.y)
+	// console.log(paddle1.position.y)
 	// console.log(obj.position.x)
 	// console.log(paddle1.position.y - (paddle_height / 2))
 	// console.log(paddle1.position.y + (paddle_height / 2))
-
-	if ((obj.position.x - x_addon + paddle2_bounce) >= 1.0 || (obj.position.x + x_addon - paddle1_bounce) <= -1.0) {
-		dx = -dx;
-	};
 	obj.position.x += dx;
 
 	// Update position of camera
