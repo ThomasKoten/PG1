@@ -3,51 +3,6 @@ window.onload = function () {
 }
 var audioContext = new AudioContext();
 
-var hit_sounds = [];
-
-function loadSound(urls, callback) {
-	Promise.all(urls.map(url => fetch(url).then(response => response.arrayBuffer())))
-		.then(arrayBuffers => Promise.all(arrayBuffers.map(buffer => audioContext.decodeAudioData(buffer))))
-		.then(decodedBuffers => {
-			console.log("Decoded buffers:", decodedBuffers);
-			hit_sounds = decodedBuffers;
-			callback();
-		})
-		.catch(error => {
-			console.error("Error loading sound:", error);
-		});
-}
-
-const urls = [
-	'/sounds/Sound1.wav',
-	'/sounds/Sound2.wav',
-	'/sounds/Sound3.wav'
-]
-
-var soundsEnabled = true
-loadSound(urls, function () {
-});
-
-function toggleSounds() {
-	var img = document.getElementById("sounds");
-	soundsEnabled = !soundsEnabled;
-	if (soundsEnabled) {
-		img.src = "/textures/sound_on.png"
-	} else {
-		img.src = "/textures/sound_off.png"
-	}
-	console.log(img.src)
-}
-
-function playSound() {
-	if (!soundsEnabled) return;
-
-	var randomSound=Math.floor(Math.random()*hit_sounds.length)
-	var source = audioContext.createBufferSource();
-	source.buffer = hit_sounds[randomSound];
-	source.connect(audioContext.destination);
-	source.start(0);
-}
 var stats;
 var camera, controls, scene, parent, obj, cube, box, paddle1, paddle1_bounce, paddle2, paddle2_bounce, renderer, dy, dx
 let box_width, box_height, cube_size, paddle_height, y_speed, zoom_out, paddle_start, x_addon, y_addon, box_border;
@@ -90,6 +45,108 @@ const game_modes = {
 		speed_coeff: 15
 	}
 }
+
+var soundsEnabled = true;
+var musicEnabled = document.getElementById("music");
+var hit_sounds = [];
+var musicBuffer;
+var musicSource;
+const urls = [
+	'/sounds/Sound1.wav',
+	'/sounds/Sound2.wav',
+	'/sounds/Sound3.wav'
+]
+
+function loadSound(urls, callback) {
+	Promise.all(urls.map(url => fetch(url).then(response => response.arrayBuffer())))
+		.then(arrayBuffers => Promise.all(arrayBuffers.map(buffer => audioContext.decodeAudioData(buffer))))
+		.then(decodedBuffers => {
+			console.log("Decoded buffers:", decodedBuffers);
+			hit_sounds = decodedBuffers;
+			callback();
+		})
+		.catch(error => {
+			console.error("Error loading sound:", error);
+		});
+}
+
+function toggleSounds() {
+	var img = document.getElementById("sounds");
+	soundsEnabled = !soundsEnabled;
+	if (soundsEnabled) {
+		img.src = "/textures/sound_on.png"
+		console.log('Sounds enabled');
+	} else {
+		img.src = "/textures/sound_off.png"
+		console.log('Sounds disabled');
+	}
+}
+
+function playSound() {
+	if (!soundsEnabled) return;
+
+	var randomSound = Math.floor(Math.random() * hit_sounds.length)
+	var source = audioContext.createBufferSource();
+	source.buffer = hit_sounds[randomSound];
+	source.connect(audioContext.destination);
+	source.start(0);
+}
+function loadMusic(url, callback) {
+	fetch(url)
+		.then(response => response.arrayBuffer())
+		.then(data => audioContext.decodeAudioData(data))
+		.then(decodedData => {
+			musicBuffer = decodedData;
+			callback();
+		})
+		.catch(error => {
+			console.error("Error loading music:", error);
+		});
+}
+
+function toggleMusic() {
+	var img = document.getElementById("music");
+	musicEnabled = !musicEnabled;
+	if (musicEnabled) {
+		img.src = "/textures/music_on.png"
+	} else {
+		img.src = "/textures/music_off.png"
+	}
+}
+
+function playMusic() {
+	musicSource = audioContext.createBufferSource();
+	musicSource.buffer = musicBuffer;
+	musicSource.loop = true; // Set the source to loop
+	musicSource.connect(audioContext.destination);
+	musicSource.start(0);
+}
+
+function stopMusic() {
+	if (musicSource) {
+		musicSource.stop(0);
+		musicSource = null;
+	}
+}
+
+musicEnabled.addEventListener('click', function () {
+	if (musicSource) {
+		stopMusic();
+		console.log('Music stopped');
+	} else {
+		playMusic();
+		console.log('Music started');
+	}
+})
+
+loadSound(urls, function () {
+});
+
+loadMusic('/sounds/Music.wav', function () {
+	console.log('Music loaded!');
+	playMusic();
+});
+
 let currentGameMode = game_modes.small;
 
 function startGame(mode) {
