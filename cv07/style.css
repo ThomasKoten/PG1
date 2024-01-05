@@ -27,3 +27,7 @@ button{
     font-size: 22px;
     cursor: pointer;
 }
+#sounds{
+    float: right;
+    width: 8em;
+}

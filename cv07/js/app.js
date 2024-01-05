@@ -3,21 +3,48 @@ window.onload = function () {
 }
 var audioContext = new AudioContext();
 
-function loadSound(url, callback) {
-	fetch(url)
-		.then(response => response.arrayBuffer())
-		.then(data => audioContext.decodeAudioData(data))
-		.then(decodedData => callback(decodedData));
+var hit_sounds = [];
+
+function loadSound(urls, callback) {
+	Promise.all(urls.map(url => fetch(url).then(response => response.arrayBuffer())))
+		.then(arrayBuffers => Promise.all(arrayBuffers.map(buffer => audioContext.decodeAudioData(buffer))))
+		.then(decodedBuffers => {
+			console.log("Decoded buffers:", decodedBuffers);
+			hit_sounds = decodedBuffers;
+			callback();
+		})
+		.catch(error => {
+			console.error("Error loading sound:", error);
+		});
 }
 
-var hit_sound;
-loadSound('/sounds/DOBRYDEN.wav', function (buffer) {
-	hit_sound = buffer;
+const urls = [
+	'/sounds/Sound1.wav',
+	'/sounds/Sound2.wav',
+	'/sounds/Sound3.wav'
+]
+
+var soundsEnabled = true
+loadSound(urls, function () {
 });
 
-function playSound(buffer) {
+function toggleSounds() {
+	var img = document.getElementById("sounds");
+	soundsEnabled = !soundsEnabled;
+	if (soundsEnabled) {
+		img.src = "/textures/sound_on.png"
+	} else {
+		img.src = "/textures/sound_off.png"
+	}
+	console.log(img.src)
+}
+
+function playSound() {
+	if (!soundsEnabled) return;
+
+	var randomSound=Math.floor(Math.random()*hit_sounds.length)
 	var source = audioContext.createBufferSource();
-	source.buffer = buffer;
+	source.buffer = hit_sounds[randomSound];
 	source.connect(audioContext.destination);
 	source.start(0);
 }
@@ -230,7 +257,7 @@ function animate() {
 	requestAnimationFrame(animate);
 	// Test of object animation
 	if ((obj.position.y - y_addon) >= 1.0 || (obj.position.y + y_addon) <= -1.0) {
-		playSound(hit_sound);
+		playSound();
 		dy = -dy;
 	};
 	obj.position.y += dy;
@@ -243,7 +270,7 @@ function animate() {
 		updateScoreBoard("player1");
 	}
 	if (isPaddleCollision(paddle1) && (obj.position.x + x_addon - paddle_width) <= -1.0) {
-		playSound(hit_sound);
+		playSound();
 		dx = -dx;
 		const collisionPoint = calculateCollision(paddle1);
 		dy = collisionPoint * max_vertical_speed
@@ -251,7 +278,7 @@ function animate() {
 	}
 
 	if (isPaddleCollision(paddle2) && (obj.position.x - x_addon + paddle_width) >= 1.0) {
-		playSound(hit_sound);
+		playSound();
 		dx = -dx;
 		const collisionPoint = calculateCollision(paddle2);
 		dy = collisionPoint * max_vertical_speed
