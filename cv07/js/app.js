@@ -144,12 +144,12 @@ loadSound(urls, function () {
 
 loadMusic('/sounds/Music.wav', function () {
 	console.log('Music loaded!');
-	playMusic();
 });
 
 let currentGameMode = game_modes.small;
 
 function startGame(mode) {
+	playMusic();
 	menu.style.display = 'none';
 	currentGameMode = game_modes[mode];
 	dy = currentGameMode.dy;
@@ -172,7 +172,7 @@ function startGame(mode) {
 function init() {
 
 	camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
-	camera.position.z = zoom_out; //*Rozmazává
+	camera.position.z = zoom_out;
 
 	controls = new THREE.TrackballControls(camera);
 	controls.rotateSpeed = 4.0;
@@ -194,23 +194,86 @@ function init() {
 	paddle2 = new THREE.Object3D();
 	parent.add(obj);
 	parent.add(box);
-	parent.add(paddle1)
-	parent.add(paddle2)
+	parent.add(paddle1);
+	parent.add(paddle2);
 	scene.add(parent);
 
+
+	var loader = new THREE.TextureLoader();
 	// Add helper object (bounding box)
-	var box_geometry = new THREE.BoxGeometry(box_width, box_height, 1.01);
-	var box_mesh = new THREE.Mesh(box_geometry, null);
-	var bbox = new THREE.BoundingBoxHelper(box_mesh, 0xffffff);
-	bbox.update();
-	scene.add(bbox);
+	loader.load('textures/Background2.jpg', function (box_texture) {
+		var box_material = new THREE.MeshBasicMaterial({ map: box_texture, side: THREE.DoubleSide });
+
+		// Create a BoxGeometry without the front face
+		var box_geometry = new THREE.Geometry();
+		var halfWidth = box_width / 2;
+		var halfHeight = box_height / 2;
+		var halfDepth = 0.505;  // Slightly more than 0.5 to avoid z-fighting with the back face
+
+		// Vertices
+		// Vertices
+		var vertices = [
+			new THREE.Vector3(-halfWidth, -halfHeight, halfDepth),  // 0
+			new THREE.Vector3(halfWidth, -halfHeight, halfDepth),   // 1
+			new THREE.Vector3(halfWidth, halfHeight, halfDepth),    // 2
+			new THREE.Vector3(-halfWidth, halfHeight, halfDepth),   // 3
+
+			new THREE.Vector3(-halfWidth, -halfHeight, -halfDepth), // 4
+			new THREE.Vector3(halfWidth, -halfHeight, -halfDepth),  // 5
+			new THREE.Vector3(halfWidth, halfHeight, -halfDepth),   // 6
+			new THREE.Vector3(-halfWidth, halfHeight, -halfDepth)   // 7
+		];
+
+		box_geometry.vertices = vertices;
+
+		// Faces (without front face)
+
+		box_geometry.faces.push(new THREE.Face3(4, 5, 6)); //Back.face
+		box_geometry.faces.push(new THREE.Face3(6, 7, 4));
+
+		box_geometry.faces.push(new THREE.Face3(0, 3, 7)); //Left.face
+		box_geometry.faces.push(new THREE.Face3(7, 4, 0));
+
+		box_geometry.faces.push(new THREE.Face3(1, 5, 6)); //Right.face
+		box_geometry.faces.push(new THREE.Face3(6, 2, 1));
+
+		box_geometry.faces.push(new THREE.Face3(0, 1, 5)); //Top.face
+		box_geometry.faces.push(new THREE.Face3(5, 4, 0));
+
+		box_geometry.faces.push(new THREE.Face3(2, 3, 7)); //Bottom.face
+		box_geometry.faces.push(new THREE.Face3(7, 6, 2));
+
+		// UVs (example for the bottom face, others can be similarly mapped)
+		var faceVertexUvs = box_geometry.faceVertexUvs[0];
+		for (let m = 0; m <= 5; m++) {
+			faceVertexUvs.push([
+				new THREE.Vector2(0, 1),
+				new THREE.Vector2(1, 1),
+				new THREE.Vector2(1, 0)
+			]);
+			faceVertexUvs.push([
+				new THREE.Vector2(1, 0),
+				new THREE.Vector2(0, 0),
+				new THREE.Vector2(0, 1)
+			]);
+		}
+		// ... Similarly, you can add UV mappings for other faces
+
+
+		var box_mesh = new THREE.Mesh(box_geometry, box_material);
+		var bbox = new THREE.BoundingBoxHelper(box_mesh, 0xffffff);
+		bbox.update();
+		scene.add(box_mesh);
+	});
+
+
 
 	// Instantiate a loader
-	var loader = new THREE.TextureLoader();
+
 	// Load a resource
 	loader.load(
 		// URL of texture
-		'textures/CD.jpg',
+		'textures/Ball2.jpg',
 		// Function when resource is loaded
 		function (texture) {
 			// Create objects using texture
@@ -228,24 +291,27 @@ function init() {
 			// take lot of time
 			render();
 		},
-
 		// Function called when download progresses
 		function (xhr) {
 			console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-		}, function (xhr) {
+		},
+		function (xhr) {
 			console.log('An error happened');
 		}
 
 	);
 	var paddle_geometry = new THREE.BoxGeometry(paddle_width, paddle_height, 1);
-	var paddle_material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-	paddle1 = new THREE.Mesh(paddle_geometry, paddle_material);
-	paddle1.position.x = paddle_start
-	scene.add(paddle1);
 
-	paddle2 = new THREE.Mesh(paddle_geometry, paddle_material);
-	paddle2.position.x = -paddle_start
-	scene.add(paddle2);
+	loader.load('textures/paddle1.jpg', function (texture) {
+		var paddle_material = new THREE.MeshBasicMaterial({ map: texture });
+		paddle1 = new THREE.Mesh(paddle_geometry, paddle_material);
+		scene.add(paddle1);
+	});
+	loader.load('textures/paddle2.jpg', function (texture) {
+		var paddle_material = new THREE.MeshBasicMaterial({ map: texture });
+		paddle2 = new THREE.Mesh(paddle_geometry, paddle_material);
+		scene.add(paddle2);
+	});
 
 	// Display statistics of drawing to canvas
 	stats = new Stats();
@@ -277,11 +343,10 @@ function reset() {
 	dx *= Math.random() < 0.5 ? 1 : -1
 }
 function isPastPaddle1() {
-	// console.log(paddle1.position.x + 2 * paddle_width)
-	return obj.position.x <= paddle1.position.x + paddle_width;
+	return obj.position.x < paddle1.position.x + paddle_width;
 }
 function isPastPaddle2() {
-	return obj.position.x >= paddle2.position.x - paddle_width;
+	return obj.position.x > paddle2.position.x - paddle_width;
 }
 
 function isPaddleCollision(paddle) {
@@ -310,6 +375,8 @@ function updateScoreBoard(playerName) {
 
 
 function animate() {
+	paddle1.position.x = paddle_start;
+	paddle2.position.x = -paddle_start;
 	//OBJ kdyžtak změň na cube
 	requestAnimationFrame(animate);
 	// Test of object animation
@@ -331,7 +398,6 @@ function animate() {
 		dx = -dx;
 		const collisionPoint = calculateCollision(paddle1);
 		dy = collisionPoint * max_vertical_speed
-		console.log(collisionPoint)
 	}
 
 	if (isPaddleCollision(paddle2) && (obj.position.x - x_addon + paddle_width) >= 1.0) {
