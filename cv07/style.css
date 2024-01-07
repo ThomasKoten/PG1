@@ -10,8 +10,9 @@ canvas {
     z-index: -1;
 
 }
-h3{
-    min-height:2em;
+
+h3 {
+    min-height: 2em;
 }
 
 #scoreBoard {
@@ -26,14 +27,18 @@ h3{
     color: aliceblue;
     justify-content: space-around;
 }
-button{
+
+button {
     margin: 10px;
     height: 2em;
     width: 10em;
     font-size: 22px;
     cursor: pointer;
 }
-#sounds,#music{
+
+#sounds,
+#music {
     float: right;
     width: 8em;
+    display: none;
 }

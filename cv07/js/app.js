@@ -11,8 +11,10 @@ var score = {
 	player1: 0,
 	player2: 0
 };
-var score_board = document.getElementById('scoreBoard');
-var menu = document.getElementById('menu');
+const score_board = document.getElementById('scoreBoard');
+const menu = document.getElementById('menu');
+const sounds = document.getElementById('sounds');
+const music = document.getElementById('music');
 var keys = {}
 const paddle_width = 0.2;
 
@@ -47,7 +49,7 @@ const game_modes = {
 }
 
 var soundsEnabled = true;
-var musicEnabled = document.getElementById("music");
+var musicEnabled = true
 var hit_sounds = [];
 var musicBuffer;
 var musicSource;
@@ -107,10 +109,15 @@ function loadMusic(url, callback) {
 function toggleMusic() {
 	var img = document.getElementById("music");
 	musicEnabled = !musicEnabled;
+	console.log(musicEnabled)
 	if (musicEnabled) {
 		img.src = "/textures/music_on.png"
+		playMusic();
+		console.log('Music started');
 	} else {
 		img.src = "/textures/music_off.png"
+		stopMusic();
+		console.log('Music stopped');
 	}
 }
 
@@ -129,16 +136,6 @@ function stopMusic() {
 	}
 }
 
-musicEnabled.addEventListener('click', function () {
-	if (musicSource) {
-		stopMusic();
-		console.log('Music stopped');
-	} else {
-		playMusic();
-		console.log('Music started');
-	}
-})
-
 loadSound(urls, function () {
 });
 
@@ -151,6 +148,8 @@ let currentGameMode = game_modes.small;
 function startGame(mode) {
 	playMusic();
 	menu.style.display = 'none';
+	sounds.style.display = 'flex';
+	music.style.display = 'flex';
 	currentGameMode = game_modes[mode];
 	dy = currentGameMode.dy;
 	max_vertical_speed = dy
@@ -371,6 +370,17 @@ function updateScoreBoard(playerName) {
 	addPoint(playerName);
 	score_board.innerText = score["player1"] + " : " + score["player2"]
 	reset();
+	winning(playerName)
+}
+
+function winning(player) {
+	if (score[player] >= 5) {
+		stopMusic();
+		dx = 0;
+		dy = 0;
+		sounds.style.display = 'flex';
+		music.style.display = 'flex';
+	}
 }
 
 
